@@ -27,6 +27,7 @@
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/BinaryFormat/Magic.h"
+#include "llvm/LTO/LTO.h"
 #include "llvm/Object/ArchiveWriter.h"
 #include "llvm/Object/COFFImportFile.h"
 #include "llvm/Object/COFFModuleDefinition.h"
@@ -1070,12 +1071,6 @@ void LinkerDriver::maybeExportMinGWSymbols(const opt::InputArgList &args) {
   });
 }
 
-static const char *libcallRoutineNames[] = {
-#define HANDLE_LIBCALL(code, name) name,
-#include "llvm/IR/RuntimeLibcalls.def"
-#undef HANDLE_LIBCALL
-};
-
 void LinkerDriver::link(ArrayRef<const char *> argsArr) {
   // Needed for LTO.
   InitializeAllTargetInfos();
@@ -1094,7 +1089,7 @@ void LinkerDriver::link(ArrayRef<const char *> argsArr) {
 
   // Parse command line options.
   ArgParser parser;
-  opt::InputArgList args = parser.parseLINK(argsArr);
+  opt::InputArgList args = parser.parse(argsArr);
 
   // Parse and evaluate -mllvm options.
   std::vector<const char *> v;
@@ -1162,7 +1157,8 @@ void LinkerDriver::link(ArrayRef<const char *> argsArr) {
   searchPaths.push_back("");
   for (auto *arg : args.filtered(OPT_libpath))
     searchPaths.push_back(arg->getValue());
-  addLibSearchPaths();
+  if (!args.hasArg(OPT_lldignoreenv))
+    addLibSearchPaths();
 
   // Handle /ignore
   for (auto *arg : args.filtered(OPT_ignore)) {
@@ -1803,7 +1799,7 @@ void LinkerDriver::link(ArrayRef<const char *> argsArr) {
     // bitcode file in an archive member, we need to arrange to use LTO to
     // compile those archive members by adding them to the link beforehand.
     if (!BitcodeFile::instances.empty())
-      for (const char *s : libcallRoutineNames)
+      for (auto *s : lto::LTO::getRuntimeLibcallSymbols())
         symtab->addLibcall(s);
 
     // Windows specific -- if __load_config_used can be resolved, resolve it.

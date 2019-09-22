@@ -3291,8 +3291,8 @@ def warn_impcast_bitfield_precision_constant : Warning<
   "implicit truncation from %2 to bit-field changes value from %0 to %1">,
   InGroup<BitFieldConstantConversion>;
 def warn_impcast_constant_int_to_objc_bool : Warning<
-  "implicit conversion from constant value %0 to BOOL; "
-  "the only well defined values for BOOL are YES and NO">,
+  "implicit conversion from constant value %0 to 'BOOL'; "
+  "the only well defined values for 'BOOL' are YES and NO">,
   InGroup<ObjCBoolConstantConversion>;
 
 def warn_impcast_fixed_point_range : Warning<
@@ -6109,8 +6109,8 @@ def warn_tautological_constant_compare : Warning<
   "%select{%1|%3}0 is always %4">,
   InGroup<TautologicalTypeLimitCompare>, DefaultIgnore;
 def warn_tautological_compare_objc_bool : Warning<
-  "result of comparison of constant %0 with expression of type BOOL"
-  " is always %1, as the only well defined values for BOOL are YES and NO">,
+  "result of comparison of constant %0 with expression of type 'BOOL'"
+  " is always %1, as the only well defined values for 'BOOL' are YES and NO">,
   InGroup<TautologicalObjCBoolCompare>;
 
 def warn_mixed_sign_comparison : Warning<
@@ -9213,10 +9213,10 @@ def err_omp_single_copyprivate_with_nowait : Error<
   "the 'copyprivate' clause must not be used with the 'nowait' clause">;
 def note_omp_nowait_clause_here : Note<
   "'nowait' clause is here">;
-def err_omp_single_decl_in_declare_simd : Error<
-  "single declaration is expected after 'declare simd' directive">;
+def err_omp_single_decl_in_declare_simd_variant : Error<
+  "single declaration is expected after 'declare %select{simd|variant}0' directive">;
 def err_omp_function_expected : Error<
-  "'#pragma omp declare simd' can only be applied to functions">;
+  "'#pragma omp declare %select{simd|variant}0' can only be applied to functions">;
 def err_omp_wrong_cancel_region : Error<
   "one of 'for', 'parallel', 'sections' or 'taskgroup' is expected">;
 def err_omp_parent_cancel_region_nowait : Error<
@@ -9408,6 +9408,31 @@ def note_omp_marked_device_type_here : Note<"marked as 'device_type(%0)' here">;
 def warn_omp_declare_target_after_first_use : Warning<
   "declaration marked as declare target after first use, it may lead to incorrect results">,
   InGroup<OpenMPTarget>;
+def err_omp_declare_variant_incompat_attributes : Error<
+  "'#pragma omp declare variant' is not compatible with any target-specific attributes">;
+def err_omp_declare_variant_after_used : Error<
+  "'#pragma omp declare variant' cannot be applied for function after first "
+  "usage">;
+def err_omp_declare_variant_noproto : Error<
+  "function with '#pragma omp declare variant' must have a prototype">;
+def note_omp_declare_variant_specified_here : Note<
+  "'#pragma omp declare variant' for function specified here">;
+def err_omp_declare_variant_doesnt_support : Error<
+  "'#pragma omp declare variant' does not "
+  "support %select{function templates|virtual functions|"
+  "deduced return types|constructors|destructors|deleted functions|"
+  "defaulted functions|constexpr functions|consteval function}0">;
+def err_omp_declare_variant_diff : Error<
+  "function with '#pragma omp declare variant' has a different %select{calling convention"
+  "|return type|constexpr specification|inline specification|storage class|"
+  "linkage}0">;
+def err_omp_declare_variant_incompat_types : Error<
+  "variant in '#pragma omp declare variant' with type %0 is incompatible with type %1"
+  >;
+def warn_omp_declare_variant_marked_as_declare_variant : Warning<
+  "variant function in '#pragma omp declare variant' is itself marked as '#pragma omp declare variant'"
+  >, InGroup<SourceUsesOpenMP>;
+def note_omp_marked_declare_variant_here : Note<"marked as 'declare variant' here">;
 } // end of OpenMP category
 
 let CategoryName = "Related Result Type Issue" in {
